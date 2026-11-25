@@ -34,7 +34,7 @@ There is no backend: everything runs in the browser.
   **Reconnect Google** and one click resumes syncing.
 - Works on `http://localhost:4747` and on GitHub Pages, not when opening `index.html` as a file.
 
-Setup:
+Setup (full step-by-step checklist with troubleshooting: [TODO.md](TODO.md)):
 
 1. Create a project: <https://console.cloud.google.com/projectcreate>
 2. Enable the Google Drive API: <https://console.cloud.google.com/apis/library/drive.googleapis.com>
