@@ -74,7 +74,7 @@
       setSaveStatus('✅ Auto-saved to save/progress.json', 'server');
     } catch {
       serverMode = false;
-      setSaveStatus('💾 Saved in this browser (server not reachable)', 'local');
+      setSaveStatus('💾 Saved in this browser', 'local');
     }
   }
 
@@ -89,9 +89,10 @@
     if (!res.ok) throw new Error(await res.text());
   }
 
-  function persist() {
+  function persist({ drive = true } = {}) {
     state.updatedAt = new Date().toISOString();
     localStorage.setItem(STATE_KEY, JSON.stringify(state));
+    if (drive) scheduleDriveSync();
     if (!serverMode) return;
     pendingSave = true;
     setSaveStatus('⏳ Saving…', 'saving');
@@ -109,6 +110,167 @@
 
   window.addEventListener('pagehide', () => {
     if (serverMode && pendingSave) pushToServer(true).catch(() => {});
+  });
+
+  // ---------- Google Drive sync ----------
+
+  const D = window.ACNHDrive;
+  const CLIENT_ID = (window.ACNH_CONFIG?.googleClientId ?? '').trim();
+  const TOKEN_KEY = 'acnh-tracker-google-token';
+  const BASE_KEY = 'acnh-tracker-drive-base';
+  const driveEnabled = !!CLIENT_ID && location.protocol.startsWith('http');
+  let token = readJson(sessionStorage.getItem(TOKEN_KEY));
+  let tokenClient = null;
+  let pendingAuth = null;
+  let driveTimer = null;
+  let driveBusy = false;
+  let driveAgain = false;
+  let driveDirty = false;
+
+  const getToken = () => (token && Date.now() < token.expiresAt - 60_000 ? token.value : null);
+  const drive = D.createDriveStore({ fetch: (...args) => fetch(...args), getToken });
+  const driveLinked = () => localStorage.getItem(BASE_KEY) !== null;
+
+  function setDriveStatus(text, kind) {
+    const el = $('drive-status');
+    el.textContent = text;
+    el.dataset.kind = kind;
+    el.hidden = !text;
+    const button = $('drive-button');
+    button.textContent = getToken() ? 'Sign out' : driveLinked() ? 'Reconnect Google' : 'Sign in with Google';
+    button.title = getToken() ? 'Stop syncing (your data stays in this browser and in Google Drive)' : 'Save your progress to your Google Drive';
+  }
+
+  function loadGoogleScript() {
+    return new Promise((resolve, reject) => {
+      if (window.google?.accounts?.oauth2) return resolve();
+      const s = Object.assign(document.createElement('script'), { src: 'https://accounts.google.com/gsi/client', async: true });
+      s.onload = resolve;
+      s.onerror = () => reject(new Error('Could not load Google sign-in'));
+      document.head.append(s);
+    });
+  }
+
+  function finishAuth(error, response) {
+    const p = pendingAuth;
+    pendingAuth = null;
+    if (!p) return;
+    if (error) p.reject(error);
+    else p.resolve(response);
+  }
+
+  async function initGoogle() {
+    $('drive-sync').hidden = false;
+    setDriveStatus(driveLinked() ? (getToken() ? '☁️ Connecting…' : '☁️ Google Drive: sign in again to sync') : '', 'idle');
+    await loadGoogleScript();
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: D.SCOPE,
+      callback: (resp) => {
+        if (resp.error) return finishAuth(new Error(resp.error_description || resp.error));
+        if (!google.accounts.oauth2.hasGrantedAllScopes(resp, D.SCOPE)) {
+          return finishAuth(new Error('Please allow access to Google Drive to sync your progress.'));
+        }
+        finishAuth(null, resp);
+      },
+      error_callback: (err) => finishAuth(new Error(err.type === 'popup_closed' ? 'Sign-in was cancelled.' : err.message || err.type)),
+    });
+    if (getToken()) runDriveSync();
+  }
+
+  // Must run synchronously inside the click handler, otherwise browsers block the popup.
+  function signIn() {
+    if (!tokenClient) return;
+    new Promise((resolve, reject) => {
+      pendingAuth = { resolve, reject };
+      tokenClient.requestAccessToken({ prompt: driveLinked() ? '' : 'consent' });
+    })
+      .then((resp) => {
+        token = { value: resp.access_token, expiresAt: Date.now() + Number(resp.expires_in) * 1000 };
+        sessionStorage.setItem(TOKEN_KEY, JSON.stringify(token));
+        return runDriveSync();
+      })
+      .catch((err) => {
+        setDriveStatus(`⚠️ ${err.message}`, 'error');
+      });
+  }
+
+  function signOut() {
+    if (!confirm('Stop syncing with Google Drive? Your progress stays in this browser and in your Google Drive.')) return;
+    if (token) google.accounts.oauth2.revoke(token.value, () => {});
+    token = null;
+    sessionStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(BASE_KEY);
+    drive.reset();
+    setDriveStatus('', 'idle');
+  }
+
+  async function syncDriveOnce() {
+    const raw = await drive.load();
+    const remote = raw ? L.normalizeState(raw) : null;
+    const base = driveLinked() ? L.normalizeState(readJson(localStorage.getItem(BASE_KEY)) ?? {}) : null;
+    if (remote) {
+      const merged = L.mergeStates(base, state, remote);
+      if (!L.sameState(merged, state)) {
+        state = merged;
+        persist({ drive: false });
+        render();
+      }
+    }
+    const snapshot = state;
+    if (!remote || !L.sameState(snapshot, remote)) await drive.save(snapshot);
+    localStorage.setItem(BASE_KEY, JSON.stringify(snapshot));
+  }
+
+  async function runDriveSync() {
+    if (!driveEnabled || !getToken()) return;
+    if (driveBusy) {
+      driveAgain = true;
+      return;
+    }
+    driveBusy = true;
+    driveDirty = false;
+    setDriveStatus('☁️ Syncing…', 'saving');
+    try {
+      do {
+        driveAgain = false;
+        await syncDriveOnce();
+      } while (driveAgain);
+      setDriveStatus('☁️ Synced to Google Drive', 'server');
+    } catch (err) {
+      console.error(err);
+      if (err.status === 401) {
+        token = null;
+        sessionStorage.removeItem(TOKEN_KEY);
+        setDriveStatus('☁️ Google session expired — sign in again to sync', 'error');
+      } else {
+        driveDirty = true;
+        setDriveStatus('⚠️ Google Drive sync failed — will retry', 'error');
+      }
+    } finally {
+      driveBusy = false;
+    }
+  }
+
+  function scheduleDriveSync() {
+    if (!driveEnabled || !driveLinked()) return;
+    driveDirty = true;
+    if (!getToken()) {
+      setDriveStatus('☁️ Not synced — sign in again', 'error');
+      return;
+    }
+    setDriveStatus('☁️ Syncing…', 'saving');
+    clearTimeout(driveTimer);
+    driveTimer = setTimeout(runDriveSync, 1000);
+  }
+
+  // Pull changes made on other devices when coming back to the tab; flush pending ones when leaving.
+  document.addEventListener('visibilitychange', () => {
+    if (!driveEnabled || !getToken()) return;
+    if (document.visibilityState === 'visible' || driveDirty) {
+      clearTimeout(driveTimer);
+      runDriveSync();
+    }
   });
 
   // Keeps several open tabs in sync.
@@ -430,9 +592,13 @@
     });
 
     $('source-link').href = DATA.source;
+    $('drive-button').addEventListener('click', () => (getToken() ? signOut() : signIn()));
     $('data-date').textContent = `updated ${DATA.updatedAt.slice(0, 10)}`;
   }
 
   bind();
-  loadState().then(render);
+  loadState().then(() => {
+    render();
+    if (driveEnabled) initGoogle().catch((err) => setDriveStatus(`⚠️ ${err.message}`, 'error'));
+  });
 })();

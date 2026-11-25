@@ -317,3 +317,20 @@ footer {
   border-radius: 8px;
   box-shadow: 0 4px 16px rgb(0 0 0 / 20%);
 }
+
+.sync {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.save-status[data-kind='saving'] {
+  color: var(--muted);
+}
+
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 0;
+  line-height: 1.5;
+}

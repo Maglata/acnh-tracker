@@ -107,6 +107,37 @@
     return { ...state, progress };
   }
 
+  const flags = (entry) => `${entry?.caught === true}/${entry?.donated === true}`;
+
+  function sameState(a, b) {
+    if (a.settings.hemisphere !== b.settings.hemisphere) return false;
+    const ids = new Set([...Object.keys(a.progress), ...Object.keys(b.progress)]);
+    for (const id of ids) if (flags(a.progress[id]) !== flags(b.progress[id])) return false;
+    return true;
+  }
+
+  /**
+   * Three-way merge of two copies of the state (e.g. this browser and Google Drive).
+   * `base` is the last copy both sides agreed on (null if they never synced).
+   * Per critter, the side that changed since `base` wins; if both changed, flags are combined.
+   */
+  function mergeStates(base, local, remote) {
+    const progress = {};
+    const ids = new Set([...Object.keys(local.progress), ...Object.keys(remote.progress)]);
+    for (const id of ids) {
+      const b = base?.progress[id];
+      const l = local.progress[id];
+      const r = remote.progress[id];
+      let pick;
+      if (flags(l) === flags(b)) pick = r;
+      else if (flags(r) === flags(b)) pick = l;
+      else pick = { caught: !!(l?.caught || r?.caught), donated: !!(l?.donated || r?.donated) };
+      if (pick?.caught || pick?.donated) progress[id] = pick.donated ? { caught: true, donated: true } : { caught: true };
+    }
+    const newest = (local.updatedAt ?? '') > (remote.updatedAt ?? '') ? local : remote;
+    return { ...defaultState(), updatedAt: newest.updatedAt, settings: { ...newest.settings }, progress };
+  }
+
   function stats(critters, state) {
     let caught = 0;
     let donated = 0;
@@ -157,6 +188,8 @@
     defaultState,
     normalizeState,
     setFlag,
+    sameState,
+    mergeStates,
     stats,
     toCsv,
   };

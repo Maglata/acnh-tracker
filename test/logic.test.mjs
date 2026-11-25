@@ -61,3 +61,26 @@ test('toCsv exports one row per critter with escaped cells', () => {
   const csv = L.toCsv([c], L.setFlag(L.defaultState(), 'x', 'caught', true), 'north').split('\n');
   assert.equal(csv[1].startsWith('bug,1,"Bug, ""big""",yes,no,10,On trees,'), true);
 });
+
+test('mergeStates keeps the side that changed since the last sync', () => {
+  const s = (progress, updatedAt) => ({ ...L.defaultState(), updatedAt, progress });
+  const base = s({ a: { caught: true }, b: { caught: true } }, '1');
+  const local = s({ a: { caught: true, donated: true }, b: { caught: true } }, '3');
+  const remote = s({ b: { caught: true }, c: { caught: true } }, '2');
+  // a: donated locally, removed remotely -> both changed, flags combined; c: added remotely.
+  assert.deepEqual(L.mergeStates(base, local, remote).progress, {
+    a: { caught: true, donated: true },
+    b: { caught: true },
+    c: { caught: true },
+  });
+  // Unchecked locally while remote is unchanged -> stays unchecked.
+  assert.deepEqual(L.mergeStates(base, s({ b: { caught: true } }, '3'), base).progress, { b: { caught: true } });
+});
+
+test('mergeStates without a previous sync never drops progress from either side', () => {
+  const s = (progress, updatedAt) => ({ ...L.defaultState(), updatedAt, progress });
+  const merged = L.mergeStates(null, s({ x: { caught: true } }, '9'), s({ y: { caught: true, donated: true } }, '1'));
+  assert.deepEqual(merged.progress, { x: { caught: true }, y: { caught: true, donated: true } });
+  assert.equal(L.sameState(merged, s(merged.progress)), true);
+  assert.equal(L.sameState(merged, s({ x: { caught: true } })), false);
+});

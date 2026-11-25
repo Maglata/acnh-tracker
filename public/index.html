@@ -12,6 +12,10 @@
       <h1>ACNH Critter Tracker</h1>
       <div id="stats" class="stats"></div>
       <div class="save-status" id="save-status" title="Where your progress is saved"></div>
+      <div class="sync" id="drive-sync" hidden>
+        <div class="save-status" id="drive-status" hidden></div>
+        <button id="drive-button" type="button">Sign in with Google</button>
+      </div>
     </header>
 
     <nav class="tabs" id="category-tabs">
@@ -68,13 +72,15 @@
 
     <footer>
       Data from the <a id="source-link" href="https://animalcrossing.fandom.com/wiki/" target="_blank" rel="noopener">Animal Crossing Wiki</a>
-      (<span id="data-date"></span>). Run <code>npm run update-data</code> to refresh.
+      (<span id="data-date"></span>). Run <code>npm run update-data</code> to refresh. · <a href="privacy.html">Privacy</a>
     </footer>
 
     <div id="toast" class="toast" role="status" hidden></div>
 
+    <script src="js/config.js"></script>
     <script src="data/critters.js"></script>
     <script src="js/logic.js"></script>
+    <script src="js/drive.js"></script>
     <script src="js/app.js"></script>
   </body>
 </html>
