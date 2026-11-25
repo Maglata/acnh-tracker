@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ACNH Critter Tracker</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐟</text></svg>" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="top">
+      <h1>ACNH Critter Tracker</h1>
+      <div id="stats" class="stats"></div>
+      <div class="save-status" id="save-status" title="Where your progress is saved"></div>
+    </header>
+
+    <nav class="tabs" id="category-tabs">
+      <button data-category="fish">🐟 Fish</button>
+      <button data-category="bug">🦋 Bugs</button>
+      <button data-category="sea">🦀 Deep-sea</button>
+      <button data-category="all">All</button>
+    </nav>
+
+    <section class="controls">
+      <div class="group">
+        <label>Hemisphere
+          <select id="hemisphere">
+            <option value="north">Northern</option>
+            <option value="south">Southern</option>
+          </select>
+        </label>
+        <label>View
+          <select id="view">
+            <option value="month">Monthly list</option>
+            <option value="all">Full year</option>
+          </select>
+        </label>
+        <label>Month
+          <select id="month"></select>
+        </label>
+        <label>Hour
+          <select id="hour"></select>
+        </label>
+        <button id="now" type="button" title="Jump to the current month and hour">Now</button>
+      </div>
+      <div class="group">
+        <label>Show
+          <select id="status">
+            <option value="all">Everything</option>
+            <option value="not-caught">Not caught</option>
+            <option value="not-donated">Not donated</option>
+            <option value="caught-not-donated">Caught, not donated</option>
+            <option value="donated">Donated</option>
+          </select>
+        </label>
+        <input id="search" type="search" placeholder="Search name, location…" />
+      </div>
+      <div class="group actions">
+        <button id="export-json" type="button">Export JSON</button>
+        <button id="export-csv" type="button">Export CSV</button>
+        <button id="import" type="button">Import…</button>
+        <input id="import-file" type="file" accept=".json,application/json" hidden />
+        <button id="reset" type="button" class="danger">Reset</button>
+      </div>
+    </section>
+
+    <main id="content"></main>
+
+    <footer>
+      Data from the <a id="source-link" href="https://animalcrossing.fandom.com/wiki/" target="_blank" rel="noopener">Animal Crossing Wiki</a>
+      (<span id="data-date"></span>). Run <code>npm run update-data</code> to refresh.
+    </footer>
+
+    <div id="toast" class="toast" role="status" hidden></div>
+
+    <script src="data/critters.js"></script>
+    <script src="js/logic.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>

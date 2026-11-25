@@ -1,0 +1,14 @@
+{
+  "name": "acnh-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local Animal Crossing: New Horizons critter tracker (fish, bugs, deep-sea creatures) with auto-save and import/export.",
+  "scripts": {
+    "start": "node server.mjs",
+    "update-data": "node scripts/update-data.mjs",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
