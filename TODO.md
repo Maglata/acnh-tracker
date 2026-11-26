@@ -13,11 +13,11 @@ CLI/API за тези стъпки), 🤖 = агент с `gh`/`git` в терм
 
 - [x] **0. 👤 Решение:** GitHub акаунтът е `Maglata`.
 - [x] **1. 🤖 GitHub:** публичното репо е създадено, кодът е push-нат и Pages е включен с GitHub Actions.
-- [ ] **2. 👤 Google Cloud:** проект + включен Google Drive API
+- [x] **2. 👤 Google Cloud:** проект `acnh-tracker-515814` создан и Google Drive API включен
 - [ ] **3. 👤 Google Cloud:** Branding (екранът за вход)
 - [ ] **4. 👤 Google Cloud:** Data Access → scope `drive.appdata`
 - [ ] **5. 👤 Google Cloud:** OAuth Client ID (Web application) с двата origin-а
-- [ ] **6. 🤖 Репо:** Client ID в `public/js/config.js`, commit, push (Pages се обновява автоматично)
+- [x] **6. 🤖 Репо:** Client ID е записан в `public/js/config.js` и публикуван в GitHub Pages
 - [ ] **7. 👤 Google Cloud:** Audience → **Publish app** (за да може всеки да влиза без списък с имейли)
 - [ ] **8. 👤+🤖 Проверка** на живия сайт (виж „Проверка“)
 
