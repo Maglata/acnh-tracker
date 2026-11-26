@@ -464,7 +464,7 @@
     } else {
       const s = L.monthSections(pool, hemi(), ui.month);
       const f = (list) => list.filter((c) => matchesFilters(c));
-      const hourNote = ui.hour === 'any' ? '' : `Only showing what can be found at ${L.formatHour(Number(ui.hour))}.`;
+      const hourNote = ui.hour === 'any' ? '' : `Showing critters available at ${L.formatHour(Number(ui.hour))} in ${monthName}.`;
       html =
         `<p class="summary">${hemiLabel} hemisphere: <strong>${s.available.length}</strong> ${label} can be caught in ${monthName}, ` +
         `<strong>${s.new.length}</strong> of which are new and <strong>${s.leaving.length}</strong> will leave after ${monthName}. ${hourNote}</p>` +
