@@ -350,6 +350,18 @@
     price: (c) => c.price ?? -1,
     where: (c) => (c.location ?? c.pattern ?? '').toLowerCase(),
     shadow: (c) => (c.shadow ?? '').toLowerCase(),
+    time: (c) => {
+      const ranges = c.schedule[hemi()][ui.month];
+      if (!ranges) return [2, 0, 0];
+      const hour = ui.hour === 'any' ? new Date().getHours() : Number(ui.hour);
+      return ranges
+        .map(([start]) => [
+          L.isAvailableAt(c, hemi(), ui.month, hour) ? 0 : 1,
+          L.isAvailableAt(c, hemi(), ui.month, hour) ? (hour - start + 24) % 24 : (start - hour + 24) % 24,
+          start,
+        ])
+        .sort(compareKeys)[0];
+    },
   };
 
   function compareKeys(a, b) {
@@ -407,7 +419,7 @@
       headerCell('Price', 'price'),
       headerCell(where, 'where'),
       showShadow ? headerCell('Shadow', 'shadow') : '',
-      '<th class="filterable" data-filter-now title="Show critters available at the current local time">Time</th>',
+      headerCell('Time', 'time'),
       showMonths
         ? L.MONTHS.map((m, i) => `<th class="month-col${i === currentMonth ? ' current' : ''}">${m.slice(0, 3)}</th>`).join('')
         : '',
@@ -567,10 +579,6 @@
       render();
     });
     $('content').addEventListener('click', (e) => {
-      if (e.target.closest('th[data-filter-now]')) {
-        filterAvailableNow();
-        return;
-      }
       const th = e.target.closest('th[data-sort]');
       if (!th) return;
       if (ui.sort === th.dataset.sort) ui.dir = -ui.dir;
