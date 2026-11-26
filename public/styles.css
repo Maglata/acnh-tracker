@@ -229,6 +229,15 @@ th.sortable {
   user-select: none;
 }
 
+th.filterable {
+  cursor: pointer;
+  user-select: none;
+}
+
+th.filterable:hover {
+  color: var(--accent-dark);
+}
+
 tr.caught td {
   background: var(--caught);
 }

@@ -407,7 +407,7 @@
       headerCell('Price', 'price'),
       headerCell(where, 'where'),
       showShadow ? headerCell('Shadow', 'shadow') : '',
-      '<th>Time</th>',
+      '<th class="filterable" data-filter-now title="Show critters available at the current local time">Time</th>',
       showMonths
         ? L.MONTHS.map((m, i) => `<th class="month-col${i === currentMonth ? ' current' : ''}">${m.slice(0, 3)}</th>`).join('')
         : '',
@@ -496,6 +496,15 @@
 
   const stamp = () => new Date().toISOString().slice(0, 10);
 
+  function filterAvailableNow() {
+    const d = new Date();
+    ui.month = d.getMonth();
+    ui.hour = String(d.getHours());
+    ui.view = 'month';
+    saveUi();
+    render();
+  }
+
   async function importFile(file) {
     let incoming;
     try {
@@ -548,14 +557,7 @@
       ui.search = e.target.value;
       render();
     });
-    $('now').addEventListener('click', () => {
-      const d = new Date();
-      ui.month = d.getMonth();
-      ui.hour = String(d.getHours());
-      ui.view = 'month';
-      saveUi();
-      render();
-    });
+    $('now').addEventListener('click', filterAvailableNow);
 
     $('content').addEventListener('change', (e) => {
       const box = e.target.closest('input[type=checkbox][data-id]');
@@ -565,6 +567,10 @@
       render();
     });
     $('content').addEventListener('click', (e) => {
+      if (e.target.closest('th[data-filter-now]')) {
+        filterAvailableNow();
+        return;
+      }
       const th = e.target.closest('th[data-sort]');
       if (!th) return;
       if (ui.sort === th.dataset.sort) ui.dir = -ui.dir;
