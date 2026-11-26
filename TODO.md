@@ -96,9 +96,10 @@ https://console.cloud.google.com/auth/branding (ако има **Get started**, �
 | Audience | **External** |
 | Developer contact email | имейлът на собственика |
 | App logo | **Остави празно.** Логото задължава проверка на марката, която отнема дни. |
-| Application home page | `https://<owner>.github.io/acnh-tracker/` |
-| Application privacy policy link | `https://<owner>.github.io/acnh-tracker/privacy.html` |
-| Authorized domains | `<owner>.github.io` |
+| Application home page | `https://maglata.github.io/acnh-tracker/` |
+| Application privacy policy link | `https://maglata.github.io/acnh-tracker/privacy.html` |
+| Application terms of service link | `https://maglata.github.io/acnh-tracker/terms.html` |
+| Authorized domains | `maglata.github.io` |
 
 `github.io` е в Public Suffix List, затова `<owner>.github.io` се приема като собствен домейн.
 
@@ -122,7 +123,7 @@ https://console.cloud.google.com/auth/clients → **Create client**
 | --- | --- |
 | Application type | **Web application** |
 | Name | `ACNH Tracker Web` |
-| Authorized JavaScript origins | `http://localhost:4747` и `https://<owner>.github.io` |
+| Authorized JavaScript origins | `http://localhost:4747` и `https://maglata.github.io` |
 | Authorized redirect URIs | **празно** (token model с popup не ползва redirect) |
 
 → **Create** → копирай **Client ID** (`123456789-xxxx.apps.googleusercontent.com`).
