@@ -324,6 +324,10 @@ footer {
   gap: 8px;
 }
 
+.sync[hidden] {
+  display: none;
+}
+
 .save-status[data-kind='saving'] {
   color: var(--muted);
 }

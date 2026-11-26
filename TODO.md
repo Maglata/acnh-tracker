@@ -11,8 +11,8 @@
 Отбелязано е кой какво може да направи: 👤 = само човек в браузъра (Google Console няма
 CLI/API за тези стъпки), 🤖 = агент с `gh`/`git` в терминала.
 
-- [ ] **0. 👤 Решение:** с кой GitHub акаунт да е репото? (виж „Предварителни условия“)
-- [ ] **1. 🤖 GitHub:** създаване на публично репо, push, включване на Pages → получаваме адреса на сайта
+- [x] **0. 👤 Решение:** GitHub акаунтът е `Maglata`.
+- [x] **1. 🤖 GitHub:** публичното репо е създадено, кодът е push-нат и Pages е включен с GitHub Actions.
 - [ ] **2. 👤 Google Cloud:** проект + включен Google Drive API
 - [ ] **3. 👤 Google Cloud:** Branding (екранът за вход)
 - [ ] **4. 👤 Google Cloud:** Data Access → scope `drive.appdata`
@@ -21,9 +21,8 @@ CLI/API за тези стъпки), 🤖 = агент с `gh`/`git` в терм
 - [ ] **7. 👤 Google Cloud:** Audience → **Publish app** (за да може всеки да влиза без списък с имейли)
 - [ ] **8. 👤+🤖 Проверка** на живия сайт (виж „Проверка“)
 
-Ред: стъпка 1 е първа, защото адресът от GitHub Pages трябва в стъпки 3 и 5. Стъпки
-2–5 може да се правят паралелно със стъпка 1, ако адресът е известен предварително
-(`https://<github-user>.github.io/acnh-tracker/`).
+Адресът вече е известен: `https://maglata.github.io/acnh-tracker/`. Използвай го в стъпки 3
+и 5. Origin-ът за Google OAuth е `https://maglata.github.io` (без път и без `/` накрая).
 
 ---
 
@@ -54,53 +53,29 @@ CLI/API за тези стъпки), 🤖 = агент с `gh`/`git` в терм
 
 ## Предварителни условия
 
-1. **GitHub акаунт.** `gh` в момента е логнат като **`gavraste-flutterint`**, което изглежда като
-   работен акаунт. За личен проект вероятно трябва личен акаунт. **Попитай потребителя.**
-   Смяна: `gh auth login` (може да има няколко акаунта, `gh auth switch`).
+1. **GitHub акаунт.** Репото е създадено в `Maglata/acnh-tracker`.
    - Ако акаунтът е част от Enterprise Managed Users (EMU), Pages може да е забранен или да е
      само частен. Тогава задължително трябва личен акаунт.
-   - Безплатен GitHub Pages изисква **публично** репо.
-2. **Право `workflow` на токена.** Текущият токен има само `gist, read:org, repo`. Без
-   `workflow` push-ът на `.github/workflows/pages.yml` ще бъде отказан:
-   ```sh
-   gh auth refresh -h github.com -s workflow
-   ```
+   - Репото е публично, а Pages deployment-ът е настроен на GitHub Actions.
+2. **GitHub CLI.** `gh` е инсталиран, влязъл е в акаунта `Maglata`, и има разрешение `workflow`.
 3. **Google акаунт**, с който ще се управлява проектът в Google Cloud. Безплатно е, не иска
-   карта за плащане. `gcloud` не е инсталиран, затова всичко е през уеб конзолата.
+   карта за плащане. Всички настройки са през уеб конзолата.
 
 ---
 
 ## Стъпка 1 — GitHub репо и Pages (🤖)
 
-```sh
-cd /Users/stefan.gavrailov/Git/acnh-tracker
-npm test                                   # трябва 17/17
+Завършено:
+- **Репо:** <https://github.com/Maglata/acnh-tracker> (публично, branch `main`).
+- **GitHub Pages:** <https://maglata.github.io/acnh-tracker/>.
+- **Workflow:** `.github/workflows/pages.yml`; първият deploy завърши успешно и `npm test` мина
+  (17/17).
+- **Проверка:** сайтът се зарежда. Google OAuth Client ID още не е настроен, затова бутонът за
+  вход е скрит и Drive синхронизацията не е готова.
 
-OWNER=$(gh api user --jq .login)           # след като е избран правилният акаунт
-gh repo create "$OWNER/acnh-tracker" --public --source=. --remote=origin \
-  --description "Animal Crossing: New Horizons critter tracker"
-git push -u origin main
-
-# Включване на Pages с източник "GitHub Actions" (еквивалент на Settings → Pages → Source)
-gh api -X POST "repos/$OWNER/acnh-tracker/pages" -f build_type=workflow \
-  || gh api -X PUT "repos/$OWNER/acnh-tracker/pages" -f build_type=workflow
-
-# Първият push може да е тръгнал преди Pages да е включен, затова пускаме отново
-gh workflow run pages.yml
-gh run watch "$(gh run list --workflow pages.yml --limit 1 --json databaseId --jq '.[0].databaseId')"
-
-gh api "repos/$OWNER/acnh-tracker/pages" --jq .html_url   # → https://<owner>.github.io/acnh-tracker/
-```
-
-Резултати, които трябва да се запишат за следващите стъпки:
-- **Адрес на сайта:** `https://<owner>.github.io/acnh-tracker/`
-- **Origin за Google:** `https://<owner>.github.io` (без път и без `/` накрая)
-
-Ако нещо се обърка:
-- `refusing to allow an OAuth App to create or update workflow` → липсва правото `workflow` (виж по-горе).
-- Deploy-ът пада с `Branch "main" is not allowed to deploy to github-pages` → Settings →
-  Environments → `github-pages` → Deployment branches → разреши `main`.
-- 404 веднага след deploy → изчакай 1–2 минути.
+За следващите стъпки:
+- **Адрес на сайта:** `https://maglata.github.io/acnh-tracker/`
+- **Origin за Google:** `https://maglata.github.io` (без път и без `/` накрая)
 
 ---
 
